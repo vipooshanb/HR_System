@@ -106,6 +106,18 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  const pickBestDashboardPosition = (positionList, candidateList) => {
+    if (!positionList.length) {
+      return ''
+    }
+
+    const usedPositionNames = new Set(
+      candidateList.map((candidate) => candidate.appliedPosition || candidate.role),
+    )
+
+    return positionList.find((position) => usedPositionNames.has(position.name))?.name || positionList[0].name
+  }
+
   const appliedTheme =
     themeMode === 'system'
       ? window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -137,9 +149,9 @@ function App() {
   useEffect(() => {
     const stillExists = positions.some((position) => position.name === selectedDashboardPosition)
     if (!stillExists && positions.length) {
-      setSelectedDashboardPosition(positions[0].name)
+      setSelectedDashboardPosition(pickBestDashboardPosition(positions, candidates))
     }
-  }, [positions, selectedDashboardPosition])
+  }, [positions, candidates, selectedDashboardPosition])
 
   useEffect(() => {
     let active = true
@@ -161,14 +173,14 @@ function App() {
           })),
         )
         setSelectedDashboardPosition((currentPosition) => {
-          const firstPositionName = positionData[0]?.name || ''
+          const defaultPositionName = pickBestDashboardPosition(positionData, candidateData)
           if (!currentPosition) {
-            return firstPositionName
+            return defaultPositionName
           }
 
           return positionData.some((position) => position.name === currentPosition)
             ? currentPosition
-            : firstPositionName
+            : defaultPositionName
         })
         setError('')
       } catch (loadError) {
