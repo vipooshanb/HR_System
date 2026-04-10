@@ -1,0 +1,1 @@
+export const stageOrder = ['Applying Period', 'Screening', 'Interview', 'Test']
