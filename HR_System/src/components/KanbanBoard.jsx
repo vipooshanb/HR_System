@@ -1,27 +1,11 @@
 import { stageOrder } from '../data/dummyCandidates'
 import StageColumn from './StageColumn'
 
-function KanbanBoard({ candidates, searchTerm, selectedStage, scoreFilter, onSelectCandidate, onMoveCandidate }) {
-  const matchesScoreFilter = (candidate) => {
-    if (scoreFilter === 'All') {
-      return true
-    }
-
-    if (scoreFilter === '4+') {
-      return candidate.overallScore >= 4
-    }
-
-    if (scoreFilter === '3-4') {
-      return candidate.overallScore >= 3 && candidate.overallScore < 4
-    }
-
-    return candidate.overallScore > 0 && candidate.overallScore < 3
-  }
-
+function KanbanBoard({ candidates, searchTerm, selectedStage, onSelectCandidate, onMoveCandidate }) {
   const filteredCandidates = candidates.filter((candidate) => {
     const matchesSearch = candidate.name.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStage = selectedStage === 'All' ? true : candidate.stage === selectedStage
-    return matchesSearch && matchesStage && matchesScoreFilter(candidate)
+    return matchesSearch && matchesStage
   })
 
   return (

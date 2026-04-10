@@ -1,9 +1,12 @@
 function Header({ activeCount, selectedTab, positionOptions, selectedPosition, onChangePosition }) {
+  const activePosition = positionOptions.find((position) => position.name === selectedPosition) || positionOptions[0]
+
   return (
     <header className="header">
       <div className="header__copy">
         <p className="header__eyebrow">Recruitment pipeline</p>
         <div className="header__title-wrap">
+          <span className="header__select-label">Position</span>
           <label className="sr-only" htmlFor="dashboard-position-select">
             Select position
           </label>
@@ -23,9 +26,9 @@ function Header({ activeCount, selectedTab, positionOptions, selectedPosition, o
         <div className="header__meta">
           <span className="chip chip--success">Open</span>
           <span className="header__dot" aria-hidden="true" />
-          <span>Researcher</span>
+          <span>{activePosition?.name || 'Position'}</span>
           <span className="header__dot" aria-hidden="true" />
-          <span>Onsite</span>
+          <span>{activePosition?.locationType || 'Onsite'}</span>
           <span className="header__dot" aria-hidden="true" />
           <span>{activeCount} active candidates</span>
         </div>

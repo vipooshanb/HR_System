@@ -8,6 +8,21 @@ function CandidateModal({ candidate, isOpen, onClose, onSave, stageOrder, positi
     setDraft(candidate)
   }, [candidate])
 
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
   if (!isOpen || !candidate) {
     return null
   }
@@ -92,6 +107,18 @@ function CandidateModal({ candidate, isOpen, onClose, onSave, stageOrder, positi
                 onChange={(event) => handleChange('location', event.target.value)}
               />
             </label>
+
+            <div className="field field--stacked">
+              <span className="field__label">Referral</span>
+              <label className="toggle-field">
+                <input
+                  type="checkbox"
+                  checked={Boolean(workingCandidate.referred)}
+                  onChange={(event) => handleChange('referred', event.target.checked)}
+                />
+                <span>Mark as referred candidate</span>
+              </label>
+            </div>
           </section>
 
           <section className="modal__card">
@@ -132,17 +159,21 @@ function CandidateModal({ candidate, isOpen, onClose, onSave, stageOrder, positi
                 <strong>{workingCandidate.applicationDate}</strong>
               </div>
               <div>
-                <span className="modal__stat-label">Score</span>
-                <strong>{workingCandidate.overallScore > 0 ? workingCandidate.overallScore.toFixed(1) : 'N/A'}</strong>
-              </div>
-              <div>
                 <span className="modal__stat-label">Referral</span>
                 <strong>{workingCandidate.referred ? 'Yes' : 'No'}</strong>
               </div>
-              <div>
-                <span className="modal__stat-label">Assessment</span>
-                <strong>{workingCandidate.assessmentAdded ? 'Added' : 'Pending'}</strong>
-              </div>
+            </div>
+
+            <div className="modal__checkbox-block">
+              <span className="modal__stat-label">Assessment</span>
+              <label className="toggle-field">
+                <input
+                  type="checkbox"
+                  checked={Boolean(workingCandidate.assessmentAdded)}
+                  onChange={(event) => handleChange('assessmentAdded', event.target.checked)}
+                />
+                <span>Assessment added</span>
+              </label>
             </div>
           </section>
 

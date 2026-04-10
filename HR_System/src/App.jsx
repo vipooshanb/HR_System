@@ -120,7 +120,6 @@ function App() {
 
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStage, setSelectedStage] = useState('All')
-  const [scoreFilter, setScoreFilter] = useState('All')
 
   const [directorySearch, setDirectorySearch] = useState('')
   const [directoryStageFilter, setDirectoryStageFilter] = useState('All')
@@ -206,18 +205,9 @@ function App() {
       const matchesStage = selectedStage === 'All' ? true : candidate.stage === selectedStage
       const matchesPosition = appliedPosition === selectedDashboardPosition
 
-      const matchesScore =
-        scoreFilter === 'All'
-          ? true
-          : scoreFilter === '4+'
-            ? candidate.overallScore >= 4
-            : scoreFilter === '3-4'
-              ? candidate.overallScore >= 3 && candidate.overallScore < 4
-              : candidate.overallScore > 0 && candidate.overallScore < 3
-
-      return matchesSearch && matchesStage && matchesScore && matchesPosition
+      return matchesSearch && matchesStage && matchesPosition
     })
-  }, [candidates, searchTerm, selectedStage, scoreFilter, selectedDashboardPosition])
+  }, [candidates, searchTerm, selectedStage, selectedDashboardPosition])
 
   const directoryCandidates = useMemo(() => {
     return candidates.filter((candidate) => {
@@ -287,7 +277,6 @@ function App() {
       appliedPosition: defaultPosition,
       stage: 'Applying Period',
       applicationDate: new Date().toISOString().slice(0, 10),
-      overallScore: 0,
       referred: false,
       assessmentAdded: false,
       email: 'new.candidate@example.com',
@@ -313,7 +302,6 @@ function App() {
   const handleResetFilters = () => {
     setSearchTerm('')
     setSelectedStage('All')
-    setScoreFilter('All')
   }
 
   const handleResetDirectoryFilters = () => {
@@ -389,8 +377,6 @@ function App() {
           onSearchTermChange={setSearchTerm}
           stageFilter={selectedStage}
           onStageFilterChange={setSelectedStage}
-          scoreFilter={scoreFilter}
-          onScoreFilterChange={setScoreFilter}
           stages={stageOrder}
           onResetFilters={handleResetFilters}
         />
@@ -406,7 +392,6 @@ function App() {
         )}
         searchTerm={searchTerm}
         selectedStage={selectedStage}
-        scoreFilter={scoreFilter}
         onSelectCandidate={handleOpenCandidate}
         onMoveCandidate={handleMoveCandidate}
       />

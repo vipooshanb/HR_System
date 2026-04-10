@@ -1,7 +1,6 @@
 import { getAvatarVariant, getCandidateInitials } from '../utils/avatar'
 
 function CandidateCard({ candidate, onClick, onDragStart, onDragEnd }) {
-  const scoreLabel = candidate.overallScore > 0 ? `${candidate.overallScore.toFixed(1)} Overall` : 'No score yet'
   const avatarVariant = getAvatarVariant(candidate.id)
   const initials = getCandidateInitials(candidate.name)
 
@@ -26,7 +25,6 @@ function CandidateCard({ candidate, onClick, onDragStart, onDragEnd }) {
       </div>
 
       <div className="candidate-card__body">
-        <span className="pill pill--score">★ {scoreLabel}</span>
         {candidate.referred ? <span className="pill pill--muted">Referred</span> : null}
       </div>
 

@@ -1,4 +1,4 @@
-function FilterBar({ searchTerm, onSearchTermChange, stageFilter, onStageFilterChange, scoreFilter, onScoreFilterChange, stages, onResetFilters }) {
+function FilterBar({ searchTerm, onSearchTermChange, stageFilter, onStageFilterChange, stages, onResetFilters }) {
   return (
     <section className="filter-bar" aria-label="Search and filters">
       <label className="field field--search">
@@ -20,16 +20,6 @@ function FilterBar({ searchTerm, onSearchTermChange, stageFilter, onStageFilterC
               {stage}
             </option>
           ))}
-        </select>
-      </label>
-
-      <label className="field">
-        <span className="field__label">Score</span>
-        <select value={scoreFilter} onChange={(event) => onScoreFilterChange(event.target.value)}>
-          <option value="All">All scores</option>
-          <option value="4+">4.0 and above</option>
-          <option value="3-4">3.0 to 3.9</option>
-          <option value="Below 3">Below 3.0</option>
         </select>
       </label>
 
