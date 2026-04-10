@@ -1,4 +1,4 @@
-import { stageOrder } from '../data/dummyCandidates'
+import { stageOrder } from '../constants/stageOrder'
 import StageColumn from './StageColumn'
 
 function KanbanBoard({ candidates, searchTerm, selectedStage, onSelectCandidate, onMoveCandidate }) {

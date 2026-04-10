@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { dummyCandidates, stageOrder } from './data/dummyCandidates'
-import { getCandidates } from './services/candidateApi'
+import {
+  createCandidate,
+  deleteCandidate,
+  getCandidates,
+  updateCandidate,
+  updateCandidateStage,
+} from './services/candidateApi'
+import { createPosition, deletePosition, getPositions, updatePosition } from './services/positionApi'
+import { stageOrder } from './constants/stageOrder'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
 import FilterBar from './components/FilterBar'
@@ -19,36 +26,6 @@ const initialThemeMode =
   initialTheme === 'light' || initialTheme === 'dark' || initialTheme === 'system'
     ? initialTheme
     : 'system'
-
-const initialPositions = [
-  {
-    id: 'pos-001',
-    name: 'Research and Development Officer',
-    requirements: ['3+ years in applied research', 'Strong communication', 'Data analysis proficiency'],
-    niceToHave: ['Technical writing', 'Mentoring experience'],
-    deadline: '2026-06-12',
-    aboutWork: 'Drive product research from idea validation to implementation handoff.',
-    locationType: 'On-site',
-  },
-  {
-    id: 'pos-002',
-    name: 'Frontend Engineer',
-    requirements: ['React expertise', 'Performance optimization', 'Design collaboration'],
-    niceToHave: ['Accessibility experience', 'Testing with Vitest'],
-    deadline: '2026-07-01',
-    aboutWork: 'Build responsive candidate and recruiter journeys for the HR platform.',
-    locationType: 'Hybrid',
-  },
-  {
-    id: 'pos-003',
-    name: 'Product Manager',
-    requirements: ['Roadmapping', 'Stakeholder alignment', 'Data-driven decisions'],
-    niceToHave: ['B2B SaaS domain knowledge'],
-    deadline: '2026-06-25',
-    aboutWork: 'Lead roadmap and collaboration across hiring and workflow products.',
-    locationType: 'Remote',
-  },
-]
 
 function LoginScreen({ onLogin }) {
   const [username, setUsername] = useState('')
@@ -112,9 +89,9 @@ function App() {
     () => window.localStorage.getItem(AUTH_STORAGE_KEY) === 'true',
   )
   const [activeView, setActiveView] = useState('Dashboard')
-  const [positions, setPositions] = useState(initialPositions)
-  const [selectedDashboardPosition, setSelectedDashboardPosition] = useState(initialPositions[0].name)
-  const [candidates, setCandidates] = useState(dummyCandidates)
+  const [positions, setPositions] = useState([])
+  const [selectedDashboardPosition, setSelectedDashboardPosition] = useState('')
+  const [candidates, setCandidates] = useState([])
   const [selectedCandidate, setSelectedCandidate] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -167,22 +144,36 @@ function App() {
   useEffect(() => {
     let active = true
 
-    async function loadCandidates() {
+    async function loadData() {
       try {
         setLoading(true)
-        const data = await getCandidates()
+        const [positionData, candidateData] = await Promise.all([getPositions(), getCandidates()])
 
-        if (active) {
-          const enriched = data.map((candidate) => ({
+        if (!active) {
+          return
+        }
+
+        setPositions(positionData)
+        setCandidates(
+          candidateData.map((candidate) => ({
             ...candidate,
             appliedPosition: candidate.appliedPosition || candidate.role,
-          }))
-          setCandidates(enriched)
-          setError('')
-        }
+          })),
+        )
+        setSelectedDashboardPosition((currentPosition) => {
+          const firstPositionName = positionData[0]?.name || ''
+          if (!currentPosition) {
+            return firstPositionName
+          }
+
+          return positionData.some((position) => position.name === currentPosition)
+            ? currentPosition
+            : firstPositionName
+        })
+        setError('')
       } catch (loadError) {
         if (active) {
-          setError(loadError instanceof Error ? loadError.message : 'Failed to load candidates')
+          setError(loadError instanceof Error ? loadError.message : 'Failed to load backend data')
         }
       } finally {
         if (active) {
@@ -191,7 +182,7 @@ function App() {
       }
     }
 
-    loadCandidates()
+    loadData()
 
     return () => {
       active = false
@@ -228,48 +219,60 @@ function App() {
     setIsModalOpen(true)
   }
 
-  const handleSaveCandidate = (updatedCandidate) => {
-    setCandidates((currentCandidates) =>
-      currentCandidates.map((candidate) =>
-        candidate.id === updatedCandidate.id ? updatedCandidate : candidate,
-      ),
-    )
-    setSelectedCandidate(updatedCandidate)
-    setIsModalOpen(false)
+  const handleSaveCandidate = async (updatedCandidate) => {
+    try {
+      const savedCandidate = await updateCandidate(updatedCandidate.id, updatedCandidate)
+
+      setCandidates((currentCandidates) =>
+        currentCandidates.map((candidate) =>
+          candidate.id === savedCandidate.id ? savedCandidate : candidate,
+        ),
+      )
+      setSelectedCandidate(savedCandidate)
+      setIsModalOpen(false)
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Failed to save candidate')
+    }
   }
 
-  const handleMoveCandidate = (candidateId, nextStage) => {
+  const handleMoveCandidate = async (candidateId, nextStage) => {
     const now = new Date().toISOString().slice(0, 10)
 
-    setCandidates((currentCandidates) =>
-      currentCandidates.map((candidate) => {
-        if (candidate.id !== candidateId || candidate.stage === nextStage) {
-          return candidate
+    try {
+      await updateCandidateStage(candidateId, nextStage)
+
+      setCandidates((currentCandidates) =>
+        currentCandidates.map((candidate) => {
+          if (candidate.id !== candidateId || candidate.stage === nextStage) {
+            return candidate
+          }
+
+          return {
+            ...candidate,
+            stage: nextStage,
+            notes: `${candidate.notes} | Stage moved to ${nextStage} (${now})`,
+          }
+        }),
+      )
+
+      setSelectedCandidate((currentCandidate) => {
+        if (!currentCandidate || currentCandidate.id !== candidateId) {
+          return currentCandidate
         }
 
         return {
-          ...candidate,
+          ...currentCandidate,
           stage: nextStage,
-          notes: `${candidate.notes} | Stage moved to ${nextStage} (${now})`,
+          notes: `${currentCandidate.notes} | Stage moved to ${nextStage} (${now})`,
         }
-      }),
-    )
-
-    setSelectedCandidate((currentCandidate) => {
-      if (!currentCandidate || currentCandidate.id !== candidateId) {
-        return currentCandidate
-      }
-
-      return {
-        ...currentCandidate,
-        stage: nextStage,
-        notes: `${currentCandidate.notes} | Stage moved to ${nextStage} (${now})`,
-      }
-    })
+      })
+    } catch (moveError) {
+      setError(moveError instanceof Error ? moveError.message : 'Failed to move candidate')
+    }
   }
 
-  const handleCreateCandidate = () => {
-    const defaultPosition = positions[0]?.name || 'Research and Development Officer'
+  const handleCreateCandidate = async () => {
+    const defaultPosition = positions[0]?.name || 'Unassigned'
     const nextCandidate = {
       id: `cand-${String(candidates.length + 1).padStart(3, '0')}`,
       name: 'New Candidate',
@@ -285,17 +288,27 @@ function App() {
       notes: 'New candidate profile created from dashboard.',
     }
 
-    setCandidates((currentCandidates) => [nextCandidate, ...currentCandidates])
-    setSelectedCandidate(nextCandidate)
-    setIsModalOpen(true)
-    setActiveView('Candidate')
+    try {
+      const createdCandidate = await createCandidate(nextCandidate)
+      setCandidates((currentCandidates) => [createdCandidate, ...currentCandidates])
+      setSelectedCandidate(createdCandidate)
+      setIsModalOpen(true)
+      setActiveView('Candidate')
+    } catch (createError) {
+      setError(createError instanceof Error ? createError.message : 'Failed to create candidate')
+    }
   }
 
-  const handleDeleteCandidate = (id) => {
-    setCandidates((currentCandidates) => currentCandidates.filter((candidate) => candidate.id !== id))
-    if (selectedCandidate?.id === id) {
-      setSelectedCandidate(null)
-      setIsModalOpen(false)
+  const handleDeleteCandidate = async (id) => {
+    try {
+      await deleteCandidate(id)
+      setCandidates((currentCandidates) => currentCandidates.filter((candidate) => candidate.id !== id))
+      if (selectedCandidate?.id === id) {
+        setSelectedCandidate(null)
+        setIsModalOpen(false)
+      }
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete candidate')
     }
   }
 
@@ -310,54 +323,69 @@ function App() {
     setDirectoryPositionFilter('All')
   }
 
-  const handleAddPosition = (newPosition) => {
-    setPositions((currentPositions) => [newPosition, ...currentPositions])
-  }
-
-  const handleDeletePosition = (positionId) => {
-    const deletedPosition = positions.find((position) => position.id === positionId)
-    setPositions((currentPositions) => currentPositions.filter((position) => position.id !== positionId))
-
-    if (deletedPosition) {
-      const fallback = positions.find((position) => position.id !== positionId)?.name || 'General Role'
-      setCandidates((currentCandidates) =>
-        currentCandidates.map((candidate) => {
-          if ((candidate.appliedPosition || candidate.role) !== deletedPosition.name) {
-            return candidate
-          }
-          return {
-            ...candidate,
-            role: fallback,
-            appliedPosition: fallback,
-          }
-        }),
-      )
+  const handleAddPosition = async (newPosition) => {
+    try {
+      const createdPosition = await createPosition(newPosition)
+      setPositions((currentPositions) => [createdPosition, ...currentPositions])
+    } catch (addError) {
+      setError(addError instanceof Error ? addError.message : 'Failed to create position')
     }
   }
 
-  const handleUpdatePosition = (updatedPosition) => {
+  const handleDeletePosition = async (positionId) => {
+    const deletedPosition = positions.find((position) => position.id === positionId)
+    try {
+      await deletePosition(positionId)
+      setPositions((currentPositions) => currentPositions.filter((position) => position.id !== positionId))
+
+      if (deletedPosition) {
+        const fallback = positions.find((position) => position.id !== positionId)?.name || 'General Role'
+        setCandidates((currentCandidates) =>
+          currentCandidates.map((candidate) => {
+            if ((candidate.appliedPosition || candidate.role) !== deletedPosition.name) {
+              return candidate
+            }
+            return {
+              ...candidate,
+              role: fallback,
+              appliedPosition: fallback,
+            }
+          }),
+        )
+      }
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete position')
+    }
+  }
+
+  const handleUpdatePosition = async (updatedPosition) => {
     const previousPosition = positions.find((position) => position.id === updatedPosition.id)
+    try {
+      const savedPosition = await updatePosition(updatedPosition.id, updatedPosition)
 
-    setPositions((currentPositions) =>
-      currentPositions.map((position) =>
-        position.id === updatedPosition.id ? updatedPosition : position,
-      ),
-    )
-
-    if (previousPosition && previousPosition.name !== updatedPosition.name) {
-      setCandidates((currentCandidates) =>
-        currentCandidates.map((candidate) => {
-          const appliedPosition = candidate.appliedPosition || candidate.role
-          if (appliedPosition !== previousPosition.name) {
-            return candidate
-          }
-          return {
-            ...candidate,
-            role: updatedPosition.name,
-            appliedPosition: updatedPosition.name,
-          }
-        }),
+      setPositions((currentPositions) =>
+        currentPositions.map((position) =>
+          position.id === savedPosition.id ? savedPosition : position,
+        ),
       )
+
+      if (previousPosition && previousPosition.name !== savedPosition.name) {
+        setCandidates((currentCandidates) =>
+          currentCandidates.map((candidate) => {
+            const appliedPosition = candidate.appliedPosition || candidate.role
+            if (appliedPosition !== previousPosition.name) {
+              return candidate
+            }
+            return {
+              ...candidate,
+              role: savedPosition.name,
+              appliedPosition: savedPosition.name,
+            }
+          }),
+        )
+      }
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : 'Failed to update position')
     }
   }
 
@@ -388,7 +416,7 @@ function App() {
 
       <KanbanBoard
         candidates={candidates.filter(
-          (candidate) => (candidate.appliedPosition || candidate.role) === selectedDashboardPosition,
+            (candidate) => !selectedDashboardPosition || (candidate.appliedPosition || candidate.role) === selectedDashboardPosition,
         )}
         searchTerm={searchTerm}
         selectedStage={selectedStage}

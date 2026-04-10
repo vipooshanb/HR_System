@@ -1,44 +1,36 @@
-import { dummyCandidates } from '../data/dummyCandidates'
+import { request } from './apiClient'
 
-const clone = (value) => JSON.parse(JSON.stringify(value))
+export function getCandidates() {
+  return request('/candidates')
+}
 
-const wait = (time = 180) =>
-  new Promise((resolve) => {
-    window.setTimeout(resolve, time)
+export function getCandidateById(id) {
+  return request(`/candidates/${id}`)
+}
+
+export function createCandidate(candidate) {
+  return request('/candidates', {
+    method: 'POST',
+    body: JSON.stringify(candidate),
   })
-
-export async function getCandidates() {
-  await wait()
-  return clone(dummyCandidates)
 }
 
-export async function getCandidateById(id) {
-  await wait(120)
-  return clone(dummyCandidates.find((candidate) => candidate.id === id) || null)
+export function updateCandidate(id, updates) {
+  return request(`/candidates/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  })
 }
 
-export async function createCandidate(candidate) {
-  await wait(120)
-  return {
-    ...clone(candidate),
-    id: crypto.randomUUID(),
-  }
+export function deleteCandidate(id) {
+  return request(`/candidates/${id}`, {
+    method: 'DELETE',
+  })
 }
 
-export async function updateCandidate(id, updates) {
-  await wait(120)
-  return {
-    id,
-    ...clone(updates),
-  }
-}
-
-export async function deleteCandidate(id) {
-  await wait(120)
-  return { id, deleted: true }
-}
-
-export async function updateCandidateStage(id, stage) {
-  await wait(120)
-  return { id, stage }
+export function updateCandidateStage(id, stage) {
+  return request(`/candidates/${id}/stage`, {
+    method: 'PATCH',
+    body: JSON.stringify({ stage }),
+  })
 }

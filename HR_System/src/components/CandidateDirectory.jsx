@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import EmptyState from './EmptyState'
-import { stageOrder } from '../data/dummyCandidates'
+import { stageOrder } from '../constants/stageOrder'
 import { getAvatarVariant, getCandidateInitials } from '../utils/avatar'
 
 function CandidateDirectory({
