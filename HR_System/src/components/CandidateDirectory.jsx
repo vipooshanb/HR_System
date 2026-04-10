@@ -126,12 +126,23 @@ function CandidateDirectory({
                       <button
                         type="button"
                         className="copy-button"
+                        aria-label="Copy phone number"
+                        title="Copy phone"
                         onClick={(event) => {
                           event.stopPropagation()
                           handleCopy(candidate.phone, `${candidate.id}-phone`)
                         }}
                       >
-                        {copiedKey === `${candidate.id}-phone` ? 'Copied' : 'Copy'}
+                        {copiedKey === `${candidate.id}-phone` ? (
+                          <svg className="copy-button__icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M20 6 9 17l-5-5" />
+                          </svg>
+                        ) : (
+                          <svg className="copy-button__icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="9" y="9" width="10" height="10" rx="2" />
+                            <rect x="5" y="5" width="10" height="10" rx="2" />
+                          </svg>
+                        )}
                       </button>
                     </span>
                     <span className="candidate-row__contact-item">
@@ -139,12 +150,23 @@ function CandidateDirectory({
                       <button
                         type="button"
                         className="copy-button"
+                        aria-label="Copy email address"
+                        title="Copy email"
                         onClick={(event) => {
                           event.stopPropagation()
                           handleCopy(candidate.email, `${candidate.id}-email`)
                         }}
                       >
-                        {copiedKey === `${candidate.id}-email` ? 'Copied' : 'Copy'}
+                        {copiedKey === `${candidate.id}-email` ? (
+                          <svg className="copy-button__icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M20 6 9 17l-5-5" />
+                          </svg>
+                        ) : (
+                          <svg className="copy-button__icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="9" y="9" width="10" height="10" rx="2" />
+                            <rect x="5" y="5" width="10" height="10" rx="2" />
+                          </svg>
+                        )}
                       </button>
                     </span>
                   </div>

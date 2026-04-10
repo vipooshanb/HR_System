@@ -1,9 +1,25 @@
-function Header({ activeCount, selectedTab }) {
+function Header({ activeCount, selectedTab, positionOptions, selectedPosition, onChangePosition }) {
   return (
     <header className="header">
       <div className="header__copy">
         <p className="header__eyebrow">Recruitment pipeline</p>
-        <h1 className="header__title">Research and Development Officer</h1>
+        <div className="header__title-wrap">
+          <label className="sr-only" htmlFor="dashboard-position-select">
+            Select position
+          </label>
+          <select
+            id="dashboard-position-select"
+            className="header__title-select"
+            value={selectedPosition}
+            onChange={(event) => onChangePosition(event.target.value)}
+          >
+            {positionOptions.map((position) => (
+              <option key={position.id} value={position.name}>
+                {position.name}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="header__meta">
           <span className="chip chip--success">Open</span>
           <span className="header__dot" aria-hidden="true" />
@@ -20,9 +36,6 @@ function Header({ activeCount, selectedTab }) {
           <span className="header__crumb-label">Current tab</span>
           <strong>{selectedTab}</strong>
         </div>
-        <button type="button" className="primary-button">
-          Share &amp; Promote
-        </button>
       </div>
     </header>
   )

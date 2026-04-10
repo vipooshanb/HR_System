@@ -13,7 +13,12 @@ import CalendarView from './components/CalendarView'
 import SettingsPanel from './components/SettingsPanel'
 
 const AUTH_STORAGE_KEY = 'hr-authenticated'
-const initialTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+const THEME_STORAGE_KEY = 'dashboard-theme'
+const initialTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
+const initialThemeMode =
+  initialTheme === 'light' || initialTheme === 'dark' || initialTheme === 'system'
+    ? initialTheme
+    : 'system'
 
 const initialPositions = [
   {
@@ -108,6 +113,7 @@ function App() {
   )
   const [activeView, setActiveView] = useState('Dashboard')
   const [positions, setPositions] = useState(initialPositions)
+  const [selectedDashboardPosition, setSelectedDashboardPosition] = useState(initialPositions[0].name)
   const [candidates, setCandidates] = useState(dummyCandidates)
   const [selectedCandidate, setSelectedCandidate] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -120,21 +126,44 @@ function App() {
   const [directoryStageFilter, setDirectoryStageFilter] = useState('All')
   const [directoryPositionFilter, setDirectoryPositionFilter] = useState('All')
 
-  const [theme, setTheme] = useState(initialTheme)
+  const [themeMode, setThemeMode] = useState(initialThemeMode)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme
-    window.localStorage.setItem('dashboard-theme', theme)
-  }, [theme])
+  const appliedTheme =
+    themeMode === 'system'
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light'
+      : themeMode
 
   useEffect(() => {
-    const storedTheme = window.localStorage.getItem('dashboard-theme')
-    if (storedTheme === 'light' || storedTheme === 'dark') {
-      setTheme(storedTheme)
+    document.documentElement.dataset.theme = appliedTheme
+    window.localStorage.setItem(THEME_STORAGE_KEY, themeMode)
+  }, [appliedTheme, themeMode])
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+
+    const handleSystemThemeChange = () => {
+      if (themeMode === 'system') {
+        document.documentElement.dataset.theme = mediaQuery.matches ? 'dark' : 'light'
+      }
     }
-  }, [])
+
+    mediaQuery.addEventListener('change', handleSystemThemeChange)
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleSystemThemeChange)
+    }
+  }, [themeMode])
+
+  useEffect(() => {
+    const stillExists = positions.some((position) => position.name === selectedDashboardPosition)
+    if (!stillExists && positions.length) {
+      setSelectedDashboardPosition(positions[0].name)
+    }
+  }, [positions, selectedDashboardPosition])
 
   useEffect(() => {
     let active = true
@@ -172,8 +201,10 @@ function App() {
 
   const filteredCandidates = useMemo(() => {
     return candidates.filter((candidate) => {
+      const appliedPosition = candidate.appliedPosition || candidate.role
       const matchesSearch = candidate.name.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesStage = selectedStage === 'All' ? true : candidate.stage === selectedStage
+      const matchesPosition = appliedPosition === selectedDashboardPosition
 
       const matchesScore =
         scoreFilter === 'All'
@@ -184,9 +215,9 @@ function App() {
               ? candidate.overallScore >= 3 && candidate.overallScore < 4
               : candidate.overallScore > 0 && candidate.overallScore < 3
 
-      return matchesSearch && matchesStage && matchesScore
+      return matchesSearch && matchesStage && matchesScore && matchesPosition
     })
-  }, [candidates, searchTerm, selectedStage, scoreFilter])
+  }, [candidates, searchTerm, selectedStage, scoreFilter, selectedDashboardPosition])
 
   const directoryCandidates = useMemo(() => {
     return candidates.filter((candidate) => {
@@ -344,7 +375,13 @@ function App() {
 
   const renderDashboard = () => (
     <>
-      <Header activeCount={filteredCandidates.length} selectedTab="Dashboard" />
+      <Header
+        activeCount={filteredCandidates.length}
+        selectedTab="Dashboard"
+        positionOptions={positions}
+        selectedPosition={selectedDashboardPosition}
+        onChangePosition={setSelectedDashboardPosition}
+      />
 
       <div className="workspace__toolbar">
         <FilterBar
@@ -357,14 +394,16 @@ function App() {
           stages={stageOrder}
           onResetFilters={handleResetFilters}
         />
-        <TopActions selectedCount={filteredCandidates.length} onCreateCandidate={handleCreateCandidate} />
+        <TopActions selectedCount={filteredCandidates.length} />
       </div>
 
       {error ? <div className="banner banner--error">{error}</div> : null}
       {loading ? <div className="banner">Loading candidates from mock data...</div> : null}
 
       <KanbanBoard
-        candidates={candidates}
+        candidates={candidates.filter(
+          (candidate) => (candidate.appliedPosition || candidate.role) === selectedDashboardPosition,
+        )}
         searchTerm={searchTerm}
         selectedStage={selectedStage}
         scoreFilter={scoreFilter}
@@ -411,7 +450,13 @@ function App() {
     }
 
     if (activeView === 'Settings') {
-      return <SettingsPanel theme={theme} onSetTheme={setTheme} />
+      return (
+        <SettingsPanel
+          themeMode={themeMode}
+          onSetThemeMode={setThemeMode}
+          onCloseSettings={() => setActiveView('Dashboard')}
+        />
+      )
     }
 
     return renderDashboard()
@@ -440,7 +485,7 @@ function App() {
         }}
       />
 
-      <main className={`workspace${activeView === 'Dashboard' ? ' workspace--dashboard' : ''}`}>
+      <main className="workspace">
         {renderActiveView()}
       </main>
 
