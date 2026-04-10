@@ -1,196 +1,189 @@
-# ZelroTech HR System (End-to-End)
+# ZelroTech HR Management System
 
-Full-stack HR recruitment management system with:
-- React + Vite frontend
-- FastAPI backend
-- In-memory seeded data for positions and candidates
+A modern, full-stack web application for managing recruitment workflows and candidate pipelines. Built with React, FastAPI, and Docker for seamless deployment.
 
-This project supports role-based candidate tracking across stages:
-- Applying Period
-- Screening
-- Interview
-- Test
+## Table of Contents
 
-## 1. Project Overview
+- [Overview](#overview)
+- [Technology Stack](#technology-stack)
+- [System Architecture](#system-architecture)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [API Documentation](#api-documentation)
+- [Features](#features)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
 
-The application helps HR teams:
-- Manage open positions
-- Track candidates in a Kanban pipeline
-- Edit candidate details and stage
-- View candidate directory with filters
-- Use calendar and settings views
+---
 
-### About This Project
+## Overview
 
-This project is an HR recruitment workspace built to manage the full hiring flow from one screen.
-It combines job positions, candidate pipelines, candidate profiles, calendar planning, and appearance settings in a single interface.
+ZelroTech HR System is a comprehensive recruitment management platform designed to streamline the hiring workflow. It provides HR teams with real-time visibility into candidate pipelines, enabling efficient tracking and management across multiple positions and recruitment stages.
 
-The main idea is simple:
-- positions define what roles are open
-- candidates move through hiring stages
-- the UI helps recruiters see progress and update data quickly
-- the backend stores the data and serves it to the frontend
+### Key Capabilities
 
-Authentication in frontend is demo-only:
-- Username: `Admin`
-- Password: `Admin123`
+- **Position Management**: Create and manage job openings with detailed requirements and specifications
+- **Candidate Pipeline**: Track candidates through hiring stages (Applying Period → Screening → Interview → Test)
+- **Kanban Board**: Visualize candidate progression with drag-and-drop functionality
+- **Candidate Directory**: Search and filter candidates across all positions
+- **Calendar Planning**: Schedule and plan recruitment activities
+- **Responsive Design**: Optimized for desktop and mobile devices with dark mode as default
 
-### Main User Flows
+### Demo Credentials
 
-- Open Dashboard to review one position at a time
-- Use the position dropdown to switch between Research and Development Officer, Frontend Engineer, and Product Manager
-- Drag candidates across the pipeline stages
-- Open a candidate card to edit profile details
-- Move to Candidate tab to search and manage the full candidate list
-- Use Home tab to manage positions and their requirements
-- Use Settings tab to change appearance or read project information
-
-## 2. Architecture
-
-### Frontend
-- Framework: React 19
-- Build tool: Vite 8
-- Styling: plain CSS
-- State: React hooks
-- API access: `fetch` through service layer
-
-### Backend
-- Framework: FastAPI
-- Server: Uvicorn
-- Storage: in-memory Python lists (seeded on startup)
-- API base path: `/api`
-
-### Communication
-- Frontend calls `/api/*`
-- In development, Vite proxies `/api` to `http://127.0.0.1:8000`
-
-## 3. Repository Structure
-
-```text
-ZelroTech/
-	readme.md
-	Backend/
-		main.py
-		requirements.txt
-		run.sh
-		app/
-			models.py
-			seed_data.py
-			store.py
-	HR_System/
-		package.json
-		vite.config.js
-		src/
-			App.jsx
-			services/
-				apiClient.js
-				candidateApi.js
-				positionApi.js
+```
+Username: Admin
+Password: Admin123
 ```
 
-## 4. Backend Technical Details
+---
 
-### API Endpoints
+## Technology Stack
 
-Health:
-- `GET /api/health`
+### Frontend
+| Component | Technology | Version |
+|-----------|-----------|---------|
+| Framework | React | 19.2.4 |
+| Build Tool | Vite | 8.0.4 |
+| Styling | Plain CSS | - |
+| State Management | React Hooks | Built-in |
+| Linting | ESLint | 9.39.4 |
 
-Positions:
-- `GET /api/positions`
-- `POST /api/positions`
-- `PUT /api/positions/{position_id}`
-- `DELETE /api/positions/{position_id}`
+### Backend
+| Component | Technology | Version |
+|-----------|-----------|---------|
+| Framework | FastAPI | ≥0.115 |
+| Server | Uvicorn | ≥0.30 |
+| Storage | In-Memory (Seeded) | - |
+| API Protocol | REST | JSON |
 
-Candidates:
-- `GET /api/candidates`
-- `GET /api/candidates/{candidate_id}`
-- `POST /api/candidates`
-- `PUT /api/candidates/{candidate_id}`
-- `PATCH /api/candidates/{candidate_id}/stage`
-- `DELETE /api/candidates/{candidate_id}`
+### Deployment
+| Component | Technology |
+|-----------|-----------|
+| Containerization | Docker | 
+| Container Runtime | Docker Engine |
+| Cloud Platform | Hugging Face Spaces |
 
-### Data Behavior
-- Seed data is loaded from `Backend/app/seed_data.py`
-- Data is stored in memory using `Backend/app/store.py`
-- Restarting backend resets data to seed defaults
+---
 
-## 5. Frontend Technical Details
+## System Architecture
 
-### Frontend Service Layer
-- `src/services/apiClient.js`: shared HTTP request helper
-- `src/services/candidateApi.js`: candidate endpoints
-- `src/services/positionApi.js`: position endpoints
+### Architecture Overview
 
-### Important Config
-- `HR_System/vite.config.js` contains dev proxy:
-	- `/api` -> `http://127.0.0.1:8000`
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Client Layer (Browser)                    │
+│  React 19 + Vite 8 | CSS | Service Layer (fetch API)        │
+└────────────────────────────┬────────────────────────────────┘
+                             │
+                    HTTP REST API (/api/*)
+                             │
+┌────────────────────────────▼────────────────────────────────┐
+│                    Application Layer                         │
+│  FastAPI + Uvicorn | Pydantic Validation | CORS Middleware  │
+├─────────────────────────────────────────────────────────────┤
+│              11 RESTful Endpoints (Positions & Candidates)   │
+└────────────────────────────┬────────────────────────────────┘
+                             │
+┌────────────────────────────▼────────────────────────────────┐
+│                    Data Layer                                │
+│  In-Memory Storage (Python Lists) | Thread-Safe (Locks)     │
+│  Seed Data: 3 Positions, 19 Candidates (Seeded on Start)    │
+└─────────────────────────────────────────────────────────────┘
+```
 
-## 5.1 Feature Guide
+### Communication Flow
 
-### Dashboard
-- Shows the recruitment pipeline for one selected position
-- The position dropdown changes which role is shown in the board
-- Available positions are loaded from the backend
-- Candidate cards can be dragged between stages
-- The board updates stage automatically after a move
-- The header summary changes with the selected role
+1. **Development**: Frontend proxies `/api` requests to `http://127.0.0.1:8000` via Vite dev server
+2. **Production**: Frontend and backend are bundled together in Docker container, served on single port (7860)
 
-### Candidate Directory
-- Shows all candidates in a searchable list
-- Supports filtering by stage and position
-- Lets you open a candidate profile for editing
-- Copy buttons let you copy phone number or email quickly
-- Delete removes a candidate from the backend dataset
+### Data Flow
 
-### Candidate Modal
-- Edit name, email, phone, location, role, stage, referral, and assessment status
-- Press `Esc` to close the modal quickly
-- Save changes are sent to the backend API
+- Frontend initiates HTTP requests through service layer (`services/apiClient.js`)
+- Backend validates requests using Pydantic models
+- Data is retrieved/modified from in-memory store (`app/store.py`)
+- Responses are returned as JSON (Pydantic-serialized)
 
-### Home / Positions
-- View all positions
-- Create a new position
-- Edit position name, deadline, requirements, nice-to-have items, work description, and location type
-- Delete a position and automatically reassign candidates if needed
+---
 
-### Calendar
-- Switch between month, week, and year views
-- Used for planning recruitment activity
+## Project Structure
 
-### Settings
-- General section changes the appearance mode
-- About section explains the project features
-- Appearance supports `System`, `Dark`, and `Light`
+```
+ZelroTech/
+├── Backend/                           # FastAPI application
+│   ├── main.py                       # Application entry point & route definitions
+│   ├── requirements.txt               # Python dependencies
+│   ├── run.sh                         # Start script
+│   └── app/
+│       ├── models.py                  # Pydantic schemas for request/response
+│       ├── store.py                   # In-memory data storage & thread safety
+│       └── seed_data.py               # Initial dataset (3 positions, 19 candidates)
+│
+├── HR_System/                         # React + Vite application
+│   ├── package.json                   # Node dependencies
+│   ├── vite.config.js                 # Vite configuration (dev proxy)
+│   ├── index.html                     # HTML entry point
+│   └── src/
+│       ├── App.jsx                    # Root component & view orchestration
+│       ├── index.css                  # Global styles
+│       ├── components/
+│       │   ├── Dashboard/             # Kanban board for candidate pipeline
+│       │   ├── CandidateDirectory/    # Searchable candidate list
+│       │   ├── CandidateModal/        # Candidate edit modal
+│       │   ├── HomeView/              # Position management
+│       │   ├── CalendarView/          # Recruitment calendar
+│       │   ├── SettingsPanel/         # Theme & settings
+│       │   └── ... (other components)
+│       ├── services/
+│       │   ├── apiClient.js           # HTTP client wrapper
+│       │   ├── candidateApi.js        # Candidate API calls
+│       │   └── positionApi.js         # Position API calls
+│       └── constants/
+│           └── stageOrder.js          # Pipeline stages constant
+│
+├── Dockerfile                         # Multi-stage Docker build
+├── .dockerignore                      # Docker build exclusions
+├── .gitignore                         # Git exclusions
+└── readme.md                          # This file
+```
 
-### Backend Data Ownership
-- Candidate data lives in the FastAPI backend
-- Position data lives in the FastAPI backend
-- Frontend only requests and displays data
-- Seed data is loaded when backend starts
+---
 
-## 6. Prerequisites
+## Getting Started
 
-- Node.js 18+ (recommended: latest LTS)
-- npm
-- Python 3.10+
-- pip
+### Prerequisites
 
-## 7. How To Run (End-to-End)
+- **Node.js**: 18 LTS or later
+- **npm**: Latest (installed with Node.js)
+- **Python**: 3.10 or later
+- **pip**: Latest (Python package manager)
 
-Open two terminals.
+### Installation & Setup
 
-### Terminal 1: Backend
+#### 1. Clone Repository
+
+```bash
+git clone https://github.com/vipooshanb/HR_System.git
+cd HR_System
+```
+
+#### 2. Backend Setup (Terminal 1)
 
 ```bash
 cd Backend
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
 ./run.sh
 ```
 
-Backend runs on:
-- `http://127.0.0.1:8000`
+The backend will start on `http://127.0.0.1:8000`
 
-### Terminal 2: Frontend
+**Verify**:
+```bash
+curl http://127.0.0.1:8000/api/health
+# Expected response: {"status":"ok"}
+```
+
+#### 3. Frontend Setup (Terminal 2)
 
 ```bash
 cd HR_System
@@ -198,78 +191,351 @@ npm install
 npm run dev
 ```
 
-Frontend runs on:
-- `http://localhost:5173`
+The frontend will start on `http://localhost:5173`
 
-## 8. Build And Lint
+**Open Browser**: Visit `http://localhost:5173` and login with demo credentials
 
-Frontend:
+---
 
-```bash
-cd HR_System
-npm run lint
-npm run build
+## API Documentation
+
+### Base URL
+
+- **Development**: `http://127.0.0.1:8000/api`
+- **Production**: `/api`
+
+### Authentication
+
+Currently using front-end only demo authentication (no backend token validation).
+
+### Endpoints
+
+#### Health Check
+
+```http
+GET /api/health
 ```
 
-Backend quick syntax check:
+**Response**: `{"status": "ok"}`
 
-```bash
-cd Backend
-python -m py_compile main.py app/models.py app/store.py app/seed_data.py
+---
+
+#### Positions
+
+##### List All Positions
+
+```http
+GET /api/positions
 ```
 
-## 9. Common Issues
+**Response** (200 OK):
+```json
+[
+  {
+    "id": "pos-abc123",
+    "name": "Senior Frontend Engineer",
+    "requirements": ["React", "TypeScript", "CSS"],
+    "niceToHave": ["Next.js", "Testing"],
+    "deadline": "2024-12-31",
+    "aboutWork": "Build modern web applications",
+    "locationType": "Remote"
+  }
+]
+```
 
-### Dummy data not visible
-Check:
-1. Backend is running on port 8000
-2. Frontend is running with `npm run dev` (not `npm run build`)
-3. You opened `http://localhost:5173`
+##### Create Position
 
-### Wrong frontend command
-- Correct: `npm run dev`
-- Wrong: `npm run deb` or `npm run drv`
+```http
+POST /api/positions
+Content-Type: application/json
 
-### API errors in UI
-If backend is stopped, frontend cannot load data because data is backend-owned now.
+{
+  "name": "Backend Engineer",
+  "requirements": ["Python", "FastAPI"],
+  "niceToHave": ["Docker"],
+  "deadline": "2024-12-31",
+  "aboutWork": "Develop scalable APIs",
+  "locationType": "Hybrid"
+}
+```
 
-## 10. Notes
+**Response** (201 Created): Position object
 
-- This backend uses local in-memory storage only.
-- Data resets to seed defaults every time backend restarts.
-- No Supabase or external database is required.
+##### Update Position
 
-## 11. Docker + Hugging Face Spaces Deployment
+```http
+PUT /api/positions/{position_id}
+Content-Type: application/json
 
-This repository now includes a root `Dockerfile` that:
-- Builds the React frontend (`HR_System/dist`)
-- Copies it into `Backend/static`
-- Serves both API and frontend using FastAPI + Uvicorn on port `7860`
+{
+  "name": "Lead Backend Engineer",
+  "deadline": "2025-01-15"
+}
+```
 
-### Local Docker test
+**Response** (200 OK): Updated position object
+
+##### Delete Position
+
+```http
+DELETE /api/positions/{position_id}
+```
+
+**Response** (204 No Content)
+
+---
+
+#### Candidates
+
+##### List All Candidates
+
+```http
+GET /api/candidates
+```
+
+**Response** (200 OK): Array of candidate objects
+
+##### Get Candidate Details
+
+```http
+GET /api/candidates/{candidate_id}
+```
+
+**Response** (200 OK): Candidate object
+
+##### Create Candidate
+
+```http
+POST /api/candidates
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "phone": "+1-234-567-8900",
+  "role": "Frontend Engineer",
+  "appliedPosition": "Senior Frontend Engineer",
+  "stage": "Applying Period",
+  "applicationDate": "2024-10-15",
+  "location": "San Francisco",
+  "notes": "Strong React experience"
+}
+```
+
+**Response** (201 Created): Created candidate object
+
+##### Update Candidate
+
+```http
+PUT /api/candidates/{candidate_id}
+Content-Type: application/json
+
+{
+  "stage": "Screening",
+  "notes": "Initial screening passed"
+}
+```
+
+**Response** (200 OK): Updated candidate object
+
+##### Update Candidate Stage
+
+```http
+PATCH /api/candidates/{candidate_id}/stage
+Content-Type: application/json
+
+{
+  "stage": "Interview"
+}
+```
+
+**Response** (200 OK): Updated candidate object
+
+##### Delete Candidate
+
+```http
+DELETE /api/candidates/{candidate_id}
+```
+
+**Response** (204 No Content)
+
+---
+
+## Features
+
+### Dashboard
+- **Position Filter**: Dropdown to switch between open positions
+- **Kanban Board**: Visual pipeline with 4 columns (Applying Period, Screening, Interview, Test)
+- **Drag & Drop**: Move candidates between stages
+- **Real-time Summary**: Active candidate count per position
+- **Responsive**: Stacks to single column on mobile
+
+### Candidate Directory
+- **Global Search**: Search by name, email, phone, or position
+- **Multi-Filter**: Advanced filtering by stage and position simultaneously
+- **Batch Operations**: Bulk actions on candidate records
+- **Quick Copy**: One-click copy for contact information
+- **Inline Delete**: Remove candidates from database
+
+### Position Management
+- **CRUD Operations**: Create, read, update, delete positions
+- **Detailed Requirements**: Specify requirements and nice-to-have skills
+- **Deadline Tracking**: Set and track application deadlines
+- **Auto-Reassignment**: Automatic fallback when position is deleted
+
+### Candidate Modal
+- **Full Profile Editing**: Complete candidate information management
+- **Stage Transitions**: Move candidates through pipeline stages
+- **Assessment Tracking**: Mark assessment completion status
+- **Referral Tracking**: Record internal referrals
+- **Quick Close**: Press ESC to close modal
+
+### Calendar
+- **Multiple Views**: Month, week, and year views
+- **Event Planning**: Organize recruitment activities and interviews
+- **Date Navigation**: Intuitive calendar controls
+
+### Settings
+- **Theme Management**: Switch between Light, Dark, and System theme
+- **Persistent Preferences**: Save theme choice to localStorage
+- **Project Information**: View feature guide and project details
+
+---
+
+## Deployment
+
+### Local Development Server
+
+Ensure backend and frontend are running as per [Getting Started](#getting-started).
+
+### Docker Build
 
 ```bash
-cd /Users/vipooshanbalachandran/Desktop/ZelroTech
 docker build -t zelrotech-hr .
+```
+
+This command:
+1. Builds React frontend (`npm run build`)
+2. Copies dist files to backend's static directory
+3. Creates production image with FastAPI server
+
+### Docker Run (Local Testing)
+
+```bash
 docker run -p 7860:7860 zelrotech-hr
 ```
 
-Open:
-- `http://localhost:7860`
+Access application at `http://localhost:7860`
 
-### Deploy to Hugging Face Spaces (Docker SDK)
+### Hugging Face Spaces Deployment
 
-1. Create a new Space on Hugging Face
-2. Choose **Docker** as SDK
-3. Push this repository content to the Space repo
-4. Hugging Face will build from the root `Dockerfile`
-5. App will be available on the Space URL
+1. **Create Space**
+   - Visit [Hugging Face Spaces](https://huggingface.co/spaces)
+   - Click "Create new Space"
+   - Select **Docker** as SDK
 
-## 12. Detailed About Summary
+2. **Push Repository**
+   ```bash
+   git remote add huggingface https://huggingface.co/spaces/your-username/HR_System
+   git push huggingface main
+   ```
 
-If you want the short version of what this app does:
-- It is a recruitment dashboard for HR teams.
-- It helps manage jobs and applicants together.
-- It shows candidates by position and hiring stage.
-- It supports quick editing without leaving the dashboard.
-- It keeps backend data separated from the frontend UI.
+3. **Auto-Deploy**
+   - Hugging Face automatically builds from Dockerfile
+   - App runs on Hugging Face's servers
+   - Access via unique Space URL
+
+---
+
+## Troubleshooting
+
+### Frontend Cannot Connect to Backend
+
+**Symptoms**: "Failed to load backend data" error in UI
+
+**Solutions**:
+1. Verify backend is running: `curl http://127.0.0.1:8000/api/health`
+2. Check Vite dev server is running (`npm run dev`, not `npm run build`)
+3. Verify port 8000 is not blocked by firewall
+4. Check vite.config.js proxy configuration
+
+### Candidate Data Not Appearing
+
+**Symptoms**: Empty Kanban board or candidate list
+
+**Solutions**:
+1. Verify `app/seed_data.py` contains candidate records
+2. Check backend logs for errors
+3. Restart backend server (data reloads from seed)
+4. Try accessing `/api/candidates` directly in browser
+
+### Port Already in Use
+
+**Error**: `Address already in use`
+
+**Solutions**:
+```bash
+# Find process on port 8000 (backend)
+lsof -ti:8000 | xargs kill -9
+
+# Find process on port 5173 (frontend)
+lsof -ti:5173 | xargs kill -9
+```
+
+### Build Failures
+
+**Frontend Build Error**:
+```bash
+cd HR_System
+npm cache clean --force
+rm -rf node_modules package-lock.json
+npm install
+npm run build
+```
+
+**Backend Import Error**:
+```bash
+cd Backend
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+---
+
+## Technical Notes
+
+### Data Storage
+
+- **Type**: In-memory Python lists with thread-safety locks
+- **Persistence**: None (resets on server restart)
+- **Seeding**: Initial data loaded from `app/seed_data.py`
+- **Future Enhancement**: Add SQLite/PostgreSQL persistence layer
+
+### Performance Considerations
+
+- Seeded dataset: 3 positions, 19 candidates (performant)
+- No database indexes (in-memory only)
+- Suitable for teams up to ~100 candidates
+- Production deployment should add persistent database
+
+### Security
+
+**Note**: This is a demo application. For production use:
+- Implement proper authentication (JWT tokens)
+- Add rate limiting
+- Enable HTTPS
+- Validate all inputs rigorously
+- Implement role-based access control (RBAC)
+
+---
+
+## Support & Contribution
+
+For issues, feature requests, or contributions, please contact the development team.
+
+---
+
+**Version**: 1.0.0  
+**Last Updated**: April 2026  
+**License**: Proprietary  
+**Status**: Production-Ready

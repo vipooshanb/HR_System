@@ -25,7 +25,7 @@ const initialTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
 const initialThemeMode =
   initialTheme === 'light' || initialTheme === 'dark' || initialTheme === 'system'
     ? initialTheme
-    : 'system'
+    : 'dark'
 
 function LoginScreen({ onLogin }) {
   const [username, setUsername] = useState('')
