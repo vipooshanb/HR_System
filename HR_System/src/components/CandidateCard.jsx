@@ -1,15 +1,23 @@
-function CandidateCard({ candidate, onClick }) {
+import { getAvatarVariant, getCandidateInitials } from '../utils/avatar'
+
+function CandidateCard({ candidate, onClick, onDragStart, onDragEnd }) {
   const scoreLabel = candidate.overallScore > 0 ? `${candidate.overallScore.toFixed(1)} Overall` : 'No score yet'
+  const avatarVariant = getAvatarVariant(candidate.id)
+  const initials = getCandidateInitials(candidate.name)
 
   return (
-    <button type="button" className="candidate-card" onClick={onClick}>
+    <button
+      type="button"
+      className="candidate-card"
+      onClick={onClick}
+      draggable
+      onDragStart={(event) => onDragStart(event, candidate.id)}
+      onDragEnd={onDragEnd}
+      title="Drag to move between stages"
+    >
       <div className="candidate-card__top">
-        <div className={`avatar avatar--${candidate.id.slice(-1)}`} aria-hidden="true">
-          {candidate.name
-            .split(' ')
-            .map((part) => part.charAt(0))
-            .slice(0, 2)
-            .join('')}
+        <div className={`avatar ${avatarVariant}`} aria-hidden="true">
+          {initials}
         </div>
         <div className="candidate-card__heading">
           <strong>{candidate.name}</strong>
@@ -25,8 +33,10 @@ function CandidateCard({ candidate, onClick }) {
       <div className="candidate-card__footer">
         {candidate.assessmentAdded ? (
           <span className="candidate-card__action">Assessment added</span>
-        ) : (
+        ) : candidate.stage === 'Interview' ? (
           <span className="candidate-card__action candidate-card__action--accent">Add assessment</span>
+        ) : (
+          <span className="candidate-card__action">Assessment available in Interview stage</span>
         )}
         <span className="candidate-card__chevron" aria-hidden="true">
           ›

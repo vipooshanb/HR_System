@@ -1,7 +1,7 @@
 import { stageOrder } from '../data/dummyCandidates'
 import StageColumn from './StageColumn'
 
-function KanbanBoard({ candidates, searchTerm, selectedStage, scoreFilter, onSelectCandidate }) {
+function KanbanBoard({ candidates, searchTerm, selectedStage, scoreFilter, onSelectCandidate, onMoveCandidate }) {
   const matchesScoreFilter = (candidate) => {
     if (scoreFilter === 'All') {
       return true
@@ -35,6 +35,11 @@ function KanbanBoard({ candidates, searchTerm, selectedStage, scoreFilter, onSel
               stage={{ name: stage }}
               candidates={stageCandidates}
               onSelectCandidate={onSelectCandidate}
+              onDropCandidate={onMoveCandidate}
+              onDragStart={(event, candidateId) => {
+                event.dataTransfer.setData('text/candidate-id', candidateId)
+              }}
+              onDragEnd={() => {}}
             />
           )
         })}
