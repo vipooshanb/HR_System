@@ -1,15 +1,5 @@
----
-title: ZelroTech HR Management System
-emoji: 👥
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-sdk_version: "latest"
-app_file: app.py
-pinned: false
----
 
-# ZelroTech HR Management System
+# HR Management System
 
 A modern, full-stack web application for managing recruitment workflows and candidate pipelines. Built with React, FastAPI, and Docker for seamless deployment.
 
