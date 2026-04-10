@@ -1777,6 +1777,35 @@ html[data-theme='dark'] .settings-shell__sidebar {
     grid-template-columns: 1fr;
   }
 
+  .header__title-select {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .header__meta {
+    gap: 6px;
+    font-size: 0.88rem;
+  }
+
+  .top-actions {
+    width: 100%;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .top-actions > * {
+    flex: 1 1 auto;
+  }
+
+  .kanban-board {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .stage-column {
+    min-width: 0;
+  }
+
   .directory__header-actions {
     width: 100%;
     justify-content: space-between;

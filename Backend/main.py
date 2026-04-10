@@ -1,6 +1,8 @@
-from fastapi import FastAPI, HTTPException, status, Depends
+from pathlib import Path
+
+from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
+from fastapi.staticfiles import StaticFiles
 
 from app.models import (
     CandidateCreate,
@@ -11,11 +13,18 @@ from app.models import (
     PositionRead,
     PositionUpdate,
 )
-from app.database import get_db, engine, Base
-from app.repository import PositionRepository, CandidateRepository
-
-# Create all tables
-Base.metadata.create_all(bind=engine)
+from app.store import (
+    create_candidate_record,
+    create_position_record,
+    delete_candidate_record,
+    delete_position_record,
+    get_candidate_record,
+    get_candidate_records,
+    get_position_records,
+    update_candidate_record,
+    update_candidate_stage_record,
+    update_position_record,
+)
 
 app = FastAPI(title='HR Management Backend', version='1.0.0')
 
@@ -34,121 +43,71 @@ def health_check():
 
 
 @app.get('/api/positions', response_model=list[PositionRead])
-def list_positions(db: Session = Depends(get_db)):
-    positions = PositionRepository.get_all(db)
-    return [
-        {
-            "id": str(p.id),
-            "name": p.name,
-            "requirements": p.requirements.split(",") if p.requirements else [],
-            "niceToHave": p.niceToHave.split(",") if p.niceToHave else [],
-            "deadline": p.deadline,
-            "aboutWork": p.aboutWork,
-            "locationType": p.locationType,
-        }
-        for p in positions
-    ]
+def list_positions():
+    return get_position_records()
 
 
 @app.post('/api/positions', response_model=PositionRead, status_code=status.HTTP_201_CREATED)
-def add_position(payload: PositionCreate, db: Session = Depends(get_db)):
-    position = PositionRepository.create(
-        db,
-        name=payload.name,
-        requirements=payload.requirements,
-        niceToHave=payload.niceToHave,
-        deadline=payload.deadline,
-        aboutWork=payload.aboutWork,
-        locationType=payload.locationType,
-    )
-    return {
-        "id": str(position.id),
-        "name": position.name,
-        "requirements": payload.requirements,
-        "niceToHave": payload.niceToHave,
-        "deadline": position.deadline,
-        "aboutWork": position.aboutWork,
-        "locationType": position.locationType,
-    }
+def add_position(payload: PositionCreate):
+    return create_position_record(payload.model_dump())
 
 
 @app.put('/api/positions/{position_id}', response_model=PositionRead)
-def edit_position(position_id: str, payload: PositionUpdate, db: Session = Depends(get_db)):
-    update_data = payload.model_dump(exclude_unset=True)
-    position = PositionRepository.update(db, int(position_id), **update_data)
-    if position is None:
+def edit_position(position_id: str, payload: PositionUpdate):
+    updated_position = update_position_record(position_id, payload.model_dump(exclude_unset=True))
+    if updated_position is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Position not found')
-    return {
-        "id": str(position.id),
-        "name": position.name,
-        "requirements": position.requirements.split(",") if position.requirements else [],
-        "niceToHave": position.niceToHave.split(",") if position.niceToHave else [],
-        "deadline": position.deadline,
-        "aboutWork": position.aboutWork,
-        "locationType": position.locationType,
-    }
+    return updated_position
 
 
 @app.delete('/api/positions/{position_id}', status_code=status.HTTP_204_NO_CONTENT)
-def remove_position(position_id: str, db: Session = Depends(get_db)):
-    deleted = PositionRepository.delete(db, int(position_id))
-    if deleted is None:
+def remove_position(position_id: str):
+    deleted = delete_position_record(position_id)
+    if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Position not found')
 
 
 @app.get('/api/candidates', response_model=list[CandidateRead])
-def list_candidates(db: Session = Depends(get_db)):
-    candidates = CandidateRepository.get_all(db)
-    return [c.to_dict() for c in candidates]
+def list_candidates():
+    return get_candidate_records()
 
 
 @app.get('/api/candidates/{candidate_id}', response_model=CandidateRead)
-def read_candidate(candidate_id: str, db: Session = Depends(get_db)):
-    candidate = CandidateRepository.get_by_id(db, int(candidate_id))
+def read_candidate(candidate_id: str):
+    candidate = get_candidate_record(candidate_id)
     if candidate is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Candidate not found')
-    return candidate.to_dict()
+    return candidate
 
 
 @app.post('/api/candidates', response_model=CandidateRead, status_code=status.HTTP_201_CREATED)
-def add_candidate(payload: CandidateCreate, db: Session = Depends(get_db)):
-    candidate = CandidateRepository.create(
-        db,
-        name=payload.name,
-        email=payload.email,
-        phone=payload.phone,
-        role=payload.role,
-        appliedPosition=payload.appliedPosition,
-        stage=payload.stage,
-        applicationDate=payload.applicationDate,
-        overallScore=payload.overallScore,
-        referred=payload.referred,
-        assessmentAdded=payload.assessmentAdded,
-        location=payload.location,
-        notes=payload.notes,
-    )
-    return candidate.to_dict()
+def add_candidate(payload: CandidateCreate):
+    return create_candidate_record(payload.model_dump())
 
 
 @app.put('/api/candidates/{candidate_id}', response_model=CandidateRead)
-def edit_candidate(candidate_id: str, payload: CandidateUpdate, db: Session = Depends(get_db)):
-    update_data = {k: v for k, v in payload.model_dump(exclude_unset=True).items() if v is not None}
-    candidate = CandidateRepository.update(db, int(candidate_id), **update_data)
+def edit_candidate(candidate_id: str, payload: CandidateUpdate):
+    candidate = update_candidate_record(candidate_id, payload.model_dump(exclude_unset=True))
     if candidate is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Candidate not found')
-    return candidate.to_dict()
+    return candidate
 
 
 @app.patch('/api/candidates/{candidate_id}/stage', response_model=CandidateRead)
-def change_candidate_stage(candidate_id: str, payload: CandidateStageUpdate, db: Session = Depends(get_db)):
-    candidate = CandidateRepository.update_stage(db, int(candidate_id), payload.stage)
+def change_candidate_stage(candidate_id: str, payload: CandidateStageUpdate):
+    candidate = update_candidate_stage_record(candidate_id, payload.stage)
     if candidate is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Candidate not found')
-    return candidate.to_dict()
+    return candidate
 
 
 @app.delete('/api/candidates/{candidate_id}', status_code=status.HTTP_204_NO_CONTENT)
-def remove_candidate(candidate_id: str, db: Session = Depends(get_db)):
-    deleted = CandidateRepository.delete(db, int(candidate_id))
-    if deleted is None:
+def remove_candidate(candidate_id: str):
+    deleted = delete_candidate_record(candidate_id)
+    if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Candidate not found')
+
+
+static_dir = Path(__file__).resolve().parent / 'static'
+if static_dir.exists():
+    app.mount('/', StaticFiles(directory=static_dir, html=True), name='frontend')
