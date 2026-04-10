@@ -235,10 +235,37 @@ If backend is stopped, frontend cannot load data because data is backend-owned n
 
 ## 10. Notes
 
-- This is currently an in-memory backend (no database persistence).
-- Next upgrade path: add SQLite/PostgreSQL with SQLAlchemy and Alembic migrations.
+- This backend uses local in-memory storage only.
+- Data resets to seed defaults every time backend restarts.
+- No Supabase or external database is required.
 
-## 11. Detailed About Summary
+## 11. Docker + Hugging Face Spaces Deployment
+
+This repository now includes a root `Dockerfile` that:
+- Builds the React frontend (`HR_System/dist`)
+- Copies it into `Backend/static`
+- Serves both API and frontend using FastAPI + Uvicorn on port `7860`
+
+### Local Docker test
+
+```bash
+cd /Users/vipooshanbalachandran/Desktop/ZelroTech
+docker build -t zelrotech-hr .
+docker run -p 7860:7860 zelrotech-hr
+```
+
+Open:
+- `http://localhost:7860`
+
+### Deploy to Hugging Face Spaces (Docker SDK)
+
+1. Create a new Space on Hugging Face
+2. Choose **Docker** as SDK
+3. Push this repository content to the Space repo
+4. Hugging Face will build from the root `Dockerfile`
+5. App will be available on the Space URL
+
+## 12. Detailed About Summary
 
 If you want the short version of what this app does:
 - It is a recruitment dashboard for HR teams.

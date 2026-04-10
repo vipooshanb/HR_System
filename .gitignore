@@ -1,0 +1,11 @@
+# Python environment and caches
+.venv/
+**/__pycache__/
+*.pyc
+
+# Local environment files
+.env
+Backend/.env
+
+# Node modules
+**/node_modules/

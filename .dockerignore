@@ -1,0 +1,16 @@
+# Git
+.git
+.gitignore
+
+# Node
+HR_System/node_modules
+HR_System/dist
+
+# Python
+**/__pycache__
+*.pyc
+.venv
+
+# Editor
+.vscode
+.DS_Store
